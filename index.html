@@ -175,20 +175,67 @@
         }
 
         function handleSearch() {
-            let keyword = removeVietnameseTones(searchInput.value.toLowerCase().trim());
-            let keywords = keyword.split(' ').filter(k => k !== '');
-            if (keywords.length === 0) {
-                filteredData = [...data];
-            } else {
-                filteredData = data.filter(item => {
-                    let str = removeVietnameseTones(JSON.stringify(item).toLowerCase());
-                    return keywords.every(k => str.includes(k));
-                });
+                let keyword = removeVietnameseTones(searchInput.value.toLowerCase().trim());
+                let keywords = keyword.split(' ').filter(k => k !== '');
+
+                if (keywords.length === 0) {
+                    filteredData = [...data];
+                } else {
+                    let scoredData = data.map(item => {
+                        let searchString = removeVietnameseTones(`${item.ten_cufull || ''} ${item.ten_moifull || ''} ${item.TruSo || ''}`.toLowerCase()).trim();
+                        let words = searchString.split(/\s+/);
+
+                        // Tìm vị trí các từ khóa
+                        let positions = keywords.map(kw => {
+                            let indices = [];
+                            words.forEach((word, index) => {
+                                if (word.includes(kw)) indices.push(index);
+                            });
+                            return indices;
+                        });
+
+                        // Nếu từ khóa nào không tìm thấy thì loại kết quả này
+                        if (positions.some(pos => pos.length === 0)) {
+                            return { ...item, score: 0 };
+                        }
+
+                        let minDistance = Infinity;
+
+                        positions[0].forEach(pos1 => {
+                            let minPos = pos1;
+                            let maxPos = pos1;
+
+                            for (let i = 1; i < positions.length; i++) {
+                                let closest = positions[i].reduce((prev, curr) =>
+                                    Math.abs(curr - pos1) < Math.abs(prev - pos1) ? curr : prev
+                                );
+                                minPos = Math.min(minPos, closest);
+                                maxPos = Math.max(maxPos, closest);
+                            }
+
+                            let distance = maxPos - minPos;
+                            if (distance < minDistance) minDistance = distance;
+                        });
+
+                        let score = 1000 - minDistance;
+
+                        // Ưu tiên cực mạnh nếu chứa cụm từ nguyên vẹn
+                        if (searchString.includes(keyword)) score += 10000;
+
+                        return { ...item, score };
+                    });
+
+                    filteredData = scoredData.filter(item => item.score > 0);
+                    filteredData.sort((a, b) => b.score - a.score);
+                    filteredData = filteredData.map(({ score, ...rest }) => rest);
+                }
+
+                currentPage = 1;
+                renderTable(currentPage);
+                renderPagination();
             }
-            currentPage = 1;
-            renderTable(currentPage);
-            renderPagination();
-        }
+
+
 
         async function fetchDataDanhBa() {
             loading.textContent = '🔄 Đang tải dữ liệu...';
