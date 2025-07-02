@@ -31,6 +31,26 @@
         td {
             white-space: normal !important;
         }
+
+        .copy-icon {
+            cursor: pointer;
+            color: green;
+            margin-left: 5px;
+        }
+
+        #toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 9999;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+        }
     </style>
 </head>
 
@@ -63,6 +83,8 @@
         </nav>
     </div>
 
+    <div id="toast">Đã copy!</div>
+
     <script>
         const versionUrl = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLitlq25jmuiirTwJe4I628Z1mpyxOz1IKolYu4VaAT7lPJH9PIGOX6EapuVqPQDUknIyVsquhqcMNYauGnBnlGDnKgXB2GBK58VoH9972F7LJTZHBjgoPaDngoXQ7IkHqS-pERfOmnWrCsWjqzttX1blTsnKY4gSH8P6V5nxt6x95eLyNfw6a3T_jbBQXSaOxxLoKoqJf_7eE5NRuHty_WJLD-TDYNP6FTK8Mgtg2Mp2ZwntO0GYlzEJWyUiNyc90BB9fJt6IwIDCV_uSocc4v49gZF4lnDjJJYx8CK-91uI9KRT3A&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1';
         const LOCAL_VER_KEY = 'localDataVersion';
@@ -72,13 +94,13 @@
                 url: 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiuEji73As42_wU4cTB39juEk5f1B60ylJ3cMwZmhElx652uZLmiwLkmCLNwUziyIRhjmqTKKm1Hfl3nrF64eacgmiXjACCZARgwR5E5d6-Q9OMHvFWzvad_gYFR4vwMMDpJGNDOoUHgDjGNCbkC6Tzq2ocphhMHTNcOs1cJ5oWzMkwcCICaIVt-qprLqeL5A5WKYXCpf-Yz7pN2aFJwg4tpbM_HgZ1TRilCvHX0JFplY4PJYxVwiv4omW3ZPBQsUFe-Z3VNzVKJxi_wmpIkrBThA1urehV3Jc5XQkVCM3ve6bKGRg&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1',
                 cacheKey: 'xaDataCache',
                 header: `<tr><th>STT</th><th>Tên cũ</th><th>Tên mới</th><th>Trụ sở</th></tr>`,
-                parse: item => `<tr><td>{index}</td><td>${item.ten_cufull}</td><td>${item.ten_moifull}</td><td>${item.TruSo}</td></tr>`
+                parse: item => `<tr><td>{index}</td><td>${item.ten_cufull}<span class="copy-icon" data-copy="${item.ten_cufull}">&#128203;</span></td><td>${item.ten_moifull}<span class="copy-icon" data-copy="${item.ten_moifull}">&#128203;</span></td><td>${item.TruSo}<span class="copy-icon" data-copy="${item.TruSo}">&#128203;</span></td></tr>`
             },
             coquan: {
                 url: 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLg3rpnogKR6p_exEGNap2_UMVr6XbntLeqaHmQ2IkzmRQsTjhPzU3JGWw0u0EqHpMtDtmYUcGVQatmGdUEb3b981RD4jW6m-iphtnWiYjdLVXICFJC_WDvC_07VL856u7dO0oNGuflMS0RgFs0G0dupTi1xOqtehxnB2YlE1w4kJ0FvlPwRFbsqefja3HEdyzAVjwGSXEcrsQm-x84D7pfyIPTOm7z-Ng4snWrok4mtRy2-3F36idpHrHBmg3kxZUBtMHAj61XyUgp8EmBkjPZl9pFCFPY4qLj6-9lHeKKEco_7Jds&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1',
                 cacheKey: 'coquanDataCache',
                 header: `<tr><th>STT</th><th>Tên</th><th>Địa chỉ</th></tr>`,
-                parse: item => `<tr><td>{index}</td><td>${item.Ten}</td><td>${item.DiaChi}</td></tr>`
+                parse: item => `<tr><td>{index}</td><td>${item.Ten}<span class="copy-icon" data-copy="${item.Ten}">&#128203;</span></td><td>${item.DiaChi}<span class="copy-icon" data-copy="${item.DiaChi}">&#128203;</span></td></tr>`
             }
         };
 
@@ -93,6 +115,15 @@
         const tableHeader = document.getElementById('tableHeader');
         const btnXa = document.getElementById('btnXa');
         const btnCoQuan = document.getElementById('btnCoQuan');
+        const toast = document.getElementById('toast');
+
+        function showToast(message) {
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
+        }
 
         function removeVietnameseTones(str) {
             return str.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
@@ -100,7 +131,6 @@
 
         async function checkVersionAndLoad() {
             try {
-                console.log('1. Kiểm tra phiên bản');
                 const res = await fetch(versionUrl);
                 const json = await res.json();
                 const serverVer = json[0]?.ver;
@@ -108,7 +138,6 @@
                 if (localVer != serverVer) {
                     localStorage.setItem(LOCAL_VER_KEY, serverVer);
                     localStorage.removeItem(currentConfig.cacheKey);
-                    console.log('1.1 Có sự khác biện giữa server:'+ serverVer +' và Cient:'+localVer);
                 }
                 loadData();
             } catch (e) {
@@ -125,6 +154,7 @@
                 let row = currentConfig.parse(item).replace('{index}', start + index + 1);
                 dataTable.innerHTML += row;
             });
+            attachCopyEvents();
         }
 
         function renderPagination() {
@@ -161,7 +191,6 @@
         }
 
         async function fetchDataDanhBa() {
-            console.log('2. Tải về Client');
             loading.textContent = '🔄 Đang tải dữ liệu...';
             loading.style.display = 'block';
             const res = await fetch(currentConfig.url);
@@ -176,25 +205,25 @@
             if (cacheData) {
                 let decompressed = LZString.decompress(cacheData);
                 data = JSON.parse(decompressed);
-                filteredData = [...data];
+                //filteredData = [...data];
+                filteredData = [...data.slice(0, 500)]; 
                 loading.textContent = '✅ Dữ liệu được tải từ cache';
-                console.log('3.1 Sử dụng dữ liệu đã có');
-                setTimeout(() => loading.style.display = 'none', 1000);
+                setTimeout(() => loading.style.display = 'none', 100);
                 renderTable(currentPage);
                 renderPagination();
                 return;
             }
             try {
-                console.log('3. Tải mới về do khác biệt phiên bản');
                 const freshData = await fetchDataDanhBa();
                 data = freshData;
-                filteredData = [...data];
+                //filteredData = [...data];
+                filteredData = [...data.slice(0, 500)]; 
                 let compressed = LZString.compress(JSON.stringify(data));
                 localStorage.setItem(currentConfig.cacheKey, compressed);
                 renderTable(currentPage);
                 renderPagination();
                 loading.textContent = '✅ Dữ liệu mới đã lưu';
-                setTimeout(() => loading.style.display = 'none', 1000);
+                setTimeout(() => loading.style.display = 'none', 100);
             } catch (error) {
                 console.error('❌ Lỗi khi tải dữ liệu:', error);
                 loading.textContent = '❌ Lỗi khi tải dữ liệu';
@@ -216,7 +245,20 @@
                 btnXa.classList.remove('btn-primary');
             }
             tableHeader.innerHTML = currentConfig.header;
+            currentPage = 1;
+            rowsPerPage = 50;
             checkVersionAndLoad();
+        }
+
+        function attachCopyEvents() {
+            document.querySelectorAll('.copy-icon').forEach(icon => {
+                icon.addEventListener('click', () => {
+                    const textToCopy = icon.getAttribute('data-copy');
+                    navigator.clipboard.writeText(textToCopy).then(() => {
+                        showToast('Đã copy: ' + textToCopy);
+                    });
+                });
+            });
         }
 
         searchInput.addEventListener('input', handleSearch);
