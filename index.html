@@ -49,7 +49,7 @@
             <button class="btn btn-warning" style="display: none;" id="reloadBtn">Tải lại cache</button>
         </div>
 
-        <div id="loading" class="text-primary">🔄 Kiểm tra Ver...</div>
+        <div id="loading" class="text-primary">🔄 Đang tải dữ liệu...</div>
 
         <div class="table-responsive">
             <table class="table table-bordered table-hover">
@@ -71,14 +71,12 @@
             xa: {
                 url: 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiuEji73As42_wU4cTB39juEk5f1B60ylJ3cMwZmhElx652uZLmiwLkmCLNwUziyIRhjmqTKKm1Hfl3nrF64eacgmiXjACCZARgwR5E5d6-Q9OMHvFWzvad_gYFR4vwMMDpJGNDOoUHgDjGNCbkC6Tzq2ocphhMHTNcOs1cJ5oWzMkwcCICaIVt-qprLqeL5A5WKYXCpf-Yz7pN2aFJwg4tpbM_HgZ1TRilCvHX0JFplY4PJYxVwiv4omW3ZPBQsUFe-Z3VNzVKJxi_wmpIkrBThA1urehV3Jc5XQkVCM3ve6bKGRg&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1',
                 cacheKey: 'xaDataCache',
-                cacheTimeKey: 'xaDataCacheTime',
                 header: `<tr><th>STT</th><th>Tên cũ</th><th>Tên mới</th><th>Trụ sở</th></tr>`,
                 parse: item => `<tr><td>{index}</td><td>${item.ten_cufull}</td><td>${item.ten_moifull}</td><td>${item.TruSo}</td></tr>`
             },
             coquan: {
                 url: 'https://script.google.com/macros/s/AKfycbyy52_SAqRV-dvNsmyI2WcfZrQnYqg9n2iQM3UhAPdDhMrxtnQIonT4ak6aFnf8V8OWXQ/exec?sheet=CoQuan',
                 cacheKey: 'coquanDataCache',
-                cacheTimeKey: 'coquanCacheTime',
                 header: `<tr><th>STT</th><th>Tên</th><th>Địa chỉ</th></tr>`,
                 parse: item => `<tr><td>{index}</td><td>${item.Ten}</td><td>${item.DiaChi}</td></tr>`
             }
@@ -102,6 +100,7 @@
 
         async function checkVersionAndLoad() {
             try {
+                console.log('1. Kiểm tra phiên bản');
                 const res = await fetch(versionUrl);
                 const json = await res.json();
                 const serverVer = json[0]?.ver;
@@ -109,8 +108,7 @@
                 if (localVer != serverVer) {
                     localStorage.setItem(LOCAL_VER_KEY, serverVer);
                     localStorage.removeItem(currentConfig.cacheKey);
-                    localStorage.removeItem(currentConfig.cacheTimeKey);
-                    console.log('Có sự khác biệt phiên bản giữa Local ' +  localVer + ' và Server ' + serverVer);
+                    console.log('1.1 Có sự khác biện giữa server:'+ serverVer +' và Cient:'+localVer);
                 }
                 loadData();
             } catch (e) {
@@ -163,41 +161,36 @@
         }
 
         async function fetchData() {
+            console.log('2. Tải về Client');
             loading.textContent = '🔄 Đang tải dữ liệu...';
             loading.style.display = 'block';
             const res = await fetch(currentConfig.url);
             const json = await res.json();
             loading.style.display = 'none';
-           
             return json.data || json;
         }
 
         async function loadData() {
             loading.style.display = 'block';
-            let cacheTime = localStorage.getItem(currentConfig.cacheTimeKey);
             let cacheData = localStorage.getItem(currentConfig.cacheKey);
-            let now = new Date();
-            if (cacheData && cacheTime) {
-                let diffDays = (now - new Date(cacheTime)) / (1000 * 60 * 60 * 24);
-                if (diffDays < 30) {
-                    let decompressed = LZString.decompress(cacheData);
-                    data = JSON.parse(decompressed);
-                    filteredData = [...data];
-                    loading.textContent = '✅ Dữ liệu được tải từ cache';
-                    setTimeout(() => loading.style.display = 'none', 1000);
-                    renderTable(currentPage);
-                    renderPagination();
-                    return;
-                }
+            if (cacheData) {
+                let decompressed = LZString.decompress(cacheData);
+                data = JSON.parse(decompressed);
+                filteredData = [...data];
+                loading.textContent = '✅ Dữ liệu được tải từ cache';
+                console.log('3.1 Sử dụng dữ liệu đã có');
+                setTimeout(() => loading.style.display = 'none', 1000);
+                renderTable(currentPage);
+                renderPagination();
+                return;
             }
             try {
-                console.log('Có Fetch dữ liệu');
+                console.log('3. Tải mới về do khác biệt phiên bản');
                 const freshData = await fetchData();
                 data = freshData;
                 filteredData = [...data];
                 let compressed = LZString.compress(JSON.stringify(data));
                 localStorage.setItem(currentConfig.cacheKey, compressed);
-                localStorage.setItem(currentConfig.cacheTimeKey, now.toISOString());
                 renderTable(currentPage);
                 renderPagination();
                 loading.textContent = '✅ Dữ liệu mới đã lưu';
@@ -230,7 +223,6 @@
 
         reloadBtn.addEventListener('click', () => {
             localStorage.removeItem(currentConfig.cacheKey);
-            localStorage.removeItem(currentConfig.cacheTimeKey);
             loadData();
         });
 
