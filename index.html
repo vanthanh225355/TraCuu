@@ -182,7 +182,7 @@
                     filteredData = [...data];
                 } else {
                     let scoredData = data.map(item => {
-                        let searchString = removeVietnameseTones(`${item.ten_cufull || ''} ${item.ten_moifull || ''} ${item.TruSo || ''}`.toLowerCase()).trim();
+                          let searchString = removeVietnameseTones(`${item.ten_cufull || ''} ${item.ten_moifull || ''}`.toLowerCase()).trim();
                         let words = searchString.split(/\s+/);
 
                         // Tìm vị trí các từ khóa
