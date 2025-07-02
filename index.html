@@ -71,13 +71,13 @@
             xa: {
                 url: 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiuEji73As42_wU4cTB39juEk5f1B60ylJ3cMwZmhElx652uZLmiwLkmCLNwUziyIRhjmqTKKm1Hfl3nrF64eacgmiXjACCZARgwR5E5d6-Q9OMHvFWzvad_gYFR4vwMMDpJGNDOoUHgDjGNCbkC6Tzq2ocphhMHTNcOs1cJ5oWzMkwcCICaIVt-qprLqeL5A5WKYXCpf-Yz7pN2aFJwg4tpbM_HgZ1TRilCvHX0JFplY4PJYxVwiv4omW3ZPBQsUFe-Z3VNzVKJxi_wmpIkrBThA1urehV3Jc5XQkVCM3ve6bKGRg&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1',
                 cacheKey: 'xaDataCache',
-                header: `<tr><th>TT</th><th>Tên cũ</th><th>Tên mới</th><th>Trụ sở</th></tr>`,
+                header: `<tr><th>STT</th><th>Tên cũ</th><th>Tên mới</th><th>Trụ sở</th></tr>`,
                 parse: item => `<tr><td>{index}</td><td>${item.ten_cufull}</td><td>${item.ten_moifull}</td><td>${item.TruSo}</td></tr>`
             },
             coquan: {
-                url: 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLgZcBMUu4eCqBihegKwUNfuK6j86bCrNiyi0Jxa0VMZnbQF1J2KhsozDeE7ttVfB8_qZZHcRyPecbq4wbZLdwk45h8UQet_63F_dJXVgaq0iVx0ARk-laHtQ_LusaVjrcD2rAkqIjuBrPH_Vheaz0nTpf8Hjon8x-hKRtd4CvQcChp5jy8LXOUALbl0iyixaJr5Rc5K_G-AqzFDdWHEc09ocYlnEpVnhl9f_AVYUMPu3rsJ6WB2QnqOxn-uZJ4gOgh9B0GsbYpQm6O4hghstpkvP5v-O_2psyfbIWa7KGlYYjRSlJg&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1',
+                url: 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLg3rpnogKR6p_exEGNap2_UMVr6XbntLeqaHmQ2IkzmRQsTjhPzU3JGWw0u0EqHpMtDtmYUcGVQatmGdUEb3b981RD4jW6m-iphtnWiYjdLVXICFJC_WDvC_07VL856u7dO0oNGuflMS0RgFs0G0dupTi1xOqtehxnB2YlE1w4kJ0FvlPwRFbsqefja3HEdyzAVjwGSXEcrsQm-x84D7pfyIPTOm7z-Ng4snWrok4mtRy2-3F36idpHrHBmg3kxZUBtMHAj61XyUgp8EmBkjPZl9pFCFPY4qLj6-9lHeKKEco_7Jds&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1',
                 cacheKey: 'coquanDataCache',
-                header: `<tr><th>TT</th><th>Tên</th><th>Địa chỉ</th></tr>`,
+                header: `<tr><th>STT</th><th>Tên</th><th>Địa chỉ</th></tr>`,
                 parse: item => `<tr><td>{index}</td><td>${item.Ten}</td><td>${item.DiaChi}</td></tr>`
             }
         };
@@ -160,7 +160,7 @@
             renderPagination();
         }
 
-        async function fetchData() {
+        async function fetchDataDanhBa() {
             console.log('2. Tải về Client');
             loading.textContent = '🔄 Đang tải dữ liệu...';
             loading.style.display = 'block';
@@ -186,7 +186,7 @@
             }
             try {
                 console.log('3. Tải mới về do khác biệt phiên bản');
-                const freshData = await fetchData();
+                const freshData = await fetchDataDanhBa();
                 data = freshData;
                 filteredData = [...data];
                 let compressed = LZString.compress(JSON.stringify(data));
