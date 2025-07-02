@@ -71,13 +71,13 @@
             xa: {
                 url: 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiuEji73As42_wU4cTB39juEk5f1B60ylJ3cMwZmhElx652uZLmiwLkmCLNwUziyIRhjmqTKKm1Hfl3nrF64eacgmiXjACCZARgwR5E5d6-Q9OMHvFWzvad_gYFR4vwMMDpJGNDOoUHgDjGNCbkC6Tzq2ocphhMHTNcOs1cJ5oWzMkwcCICaIVt-qprLqeL5A5WKYXCpf-Yz7pN2aFJwg4tpbM_HgZ1TRilCvHX0JFplY4PJYxVwiv4omW3ZPBQsUFe-Z3VNzVKJxi_wmpIkrBThA1urehV3Jc5XQkVCM3ve6bKGRg&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1',
                 cacheKey: 'xaDataCache',
-                header: `<tr><th>STT</th><th>Tên cũ</th><th>Tên mới</th><th>Trụ sở</th></tr>`,
+                header: `<tr><th>TT</th><th>Tên cũ</th><th>Tên mới</th><th>Trụ sở</th></tr>`,
                 parse: item => `<tr><td>{index}</td><td>${item.ten_cufull}</td><td>${item.ten_moifull}</td><td>${item.TruSo}</td></tr>`
             },
             coquan: {
                 url: 'https://script.google.com/macros/s/AKfycbyy52_SAqRV-dvNsmyI2WcfZrQnYqg9n2iQM3UhAPdDhMrxtnQIonT4ak6aFnf8V8OWXQ/exec?sheet=CoQuan',
                 cacheKey: 'coquanDataCache',
-                header: `<tr><th>STT</th><th>Tên</th><th>Địa chỉ</th></tr>`,
+                header: `<tr><th>TT</th><th>Tên</th><th>Địa chỉ</th></tr>`,
                 parse: item => `<tr><td>{index}</td><td>${item.Ten}</td><td>${item.DiaChi}</td></tr>`
             }
         };
