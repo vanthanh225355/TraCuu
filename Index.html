@@ -9,7 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <style>
         body {
-            padding: 20px;
+            padding: 10px;
         }
 
         .pagination {
@@ -22,27 +22,34 @@
             margin: 20px 0;
         }
 
-        .active-btn {
-            font-weight: bold;
+        table {
+            font-size: 14px;
+            word-break: break-word;
+        }
+
+        th,
+        td {
+            white-space: normal !important;
         }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <h2 class="mb-4">Tra cứu Danh bạ </h2> <p>Dev a Thành 0837000077</p>
-        <div class="mb-3">
-            <button class="btn btn-primary me-2" id="btnXa">Tra cứu địa chỉ xã cũ - mới</button>
+        <h2 class="mb-4 text-center">Tra cứu Danh bạ</h2>
+        <p class="text-center">Dev a Thành 0837000077</p>
+
+        <div class="mb-3 d-flex flex-column flex-md-row justify-content-center gap-2">
+            <button class="btn btn-primary" id="btnXa">Tra cứu địa chỉ xã cũ - mới</button>
             <button class="btn btn-secondary" id="btnCoQuan">Tra cứu sở ban ngành</button>
         </div>
 
-        <div class="d-flex justify-content-between mb-3">
-            <input type="text" id="searchInput" class="form-control me-2" placeholder="Nhập từ khóa để tìm kiếm..."
-                style="max-width: 100%;" />
-            <button class="btn btn-warning" id="reloadBtn">Tải lại cache</button>
+        <div class="mb-3 d-flex flex-column flex-md-row gap-2">
+            <input type="text" id="searchInput" class="form-control" placeholder="Nhập từ khóa để tìm kiếm..." />
+            <button class="btn btn-warning" style="display: none;" id="reloadBtn">Tải lại cache</button>
         </div>
 
-        <div id="loading" class="text-primary">🔄 Đang tải dữ liệu...</div>
+        <div id="loading" class="text-primary">🔄 Kiểm tra Ver...</div>
 
         <div class="table-responsive">
             <table class="table table-bordered table-hover">
@@ -57,6 +64,9 @@
     </div>
 
     <script>
+        const versionUrl = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLitlq25jmuiirTwJe4I628Z1mpyxOz1IKolYu4VaAT7lPJH9PIGOX6EapuVqPQDUknIyVsquhqcMNYauGnBnlGDnKgXB2GBK58VoH9972F7LJTZHBjgoPaDngoXQ7IkHqS-pERfOmnWrCsWjqzttX1blTsnKY4gSH8P6V5nxt6x95eLyNfw6a3T_jbBQXSaOxxLoKoqJf_7eE5NRuHty_WJLD-TDYNP6FTK8Mgtg2Mp2ZwntO0GYlzEJWyUiNyc90BB9fJt6IwIDCV_uSocc4v49gZF4lnDjJJYx8CK-91uI9KRT3A&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1';
+        const LOCAL_VER_KEY = 'localDataVersion';
+
         const configs = {
             xa: {
                 url: 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiuEji73As42_wU4cTB39juEk5f1B60ylJ3cMwZmhElx652uZLmiwLkmCLNwUziyIRhjmqTKKm1Hfl3nrF64eacgmiXjACCZARgwR5E5d6-Q9OMHvFWzvad_gYFR4vwMMDpJGNDOoUHgDjGNCbkC6Tzq2ocphhMHTNcOs1cJ5oWzMkwcCICaIVt-qprLqeL5A5WKYXCpf-Yz7pN2aFJwg4tpbM_HgZ1TRilCvHX0JFplY4PJYxVwiv4omW3ZPBQsUFe-Z3VNzVKJxi_wmpIkrBThA1urehV3Jc5XQkVCM3ve6bKGRg&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1',
@@ -87,7 +97,26 @@
         const btnCoQuan = document.getElementById('btnCoQuan');
 
         function removeVietnameseTones(str) {
-            return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+            return str.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+        }
+
+        async function checkVersionAndLoad() {
+            try {
+                const res = await fetch(versionUrl);
+                const json = await res.json();
+                const serverVer = json[0]?.ver;
+                const localVer = localStorage.getItem(LOCAL_VER_KEY);
+                if (localVer != serverVer) {
+                    localStorage.setItem(LOCAL_VER_KEY, serverVer);
+                    localStorage.removeItem(currentConfig.cacheKey);
+                    localStorage.removeItem(currentConfig.cacheTimeKey);
+                    console.log('Có sự khác biệt phiên bản giữa Local ' +  localVer + ' và Server ' + serverVer);
+                }
+                loadData();
+            } catch (e) {
+                console.error('Lỗi kiểm tra version:', e);
+                loadData();
+            }
         }
 
         function renderTable(page = 1) {
@@ -139,6 +168,7 @@
             const res = await fetch(currentConfig.url);
             const json = await res.json();
             loading.style.display = 'none';
+           
             return json.data || json;
         }
 
@@ -161,6 +191,7 @@
                 }
             }
             try {
+                console.log('Có Fetch dữ liệu');
                 const freshData = await fetchData();
                 data = freshData;
                 filteredData = [...data];
@@ -192,7 +223,7 @@
                 btnXa.classList.remove('btn-primary');
             }
             tableHeader.innerHTML = currentConfig.header;
-            loadData();
+            checkVersionAndLoad();
         }
 
         searchInput.addEventListener('input', handleSearch);
@@ -206,7 +237,6 @@
         btnXa.addEventListener('click', () => switchMode('xa'));
         btnCoQuan.addEventListener('click', () => switchMode('coquan'));
 
-        // Mặc định load bảng Xã
         switchMode('xa');
     </script>
 </body>
