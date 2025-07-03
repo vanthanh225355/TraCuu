@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tra cứu Danh bạ</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.4.4/lz-string.min.js"></script>
     <style>
         body {
             padding: 10px;
@@ -16,7 +15,8 @@
             justify-content: center;
         }
 
-        #loading {
+        #loadingXa,
+        #loadingCoQuan {
             text-align: center;
             font-weight: bold;
             margin: 20px 0;
@@ -51,274 +51,354 @@
             z-index: 9999;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
         }
+
+        .tab-content {
+            margin-top: 20px;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
         <h2 class="mb-4 text-center">Tra cứu Danh bạ</h2>
-        <p class="text-center">Dev a Thành 0837000077</p>
 
-        <div class="mb-3 d-flex flex-column flex-md-row justify-content-center gap-2">
-            <button class="btn btn-primary" id="btnXa">Tra cứu địa chỉ xã cũ - mới</button>
-            <button class="btn btn-secondary" id="btnCoQuan">Tra cứu sở ban ngành</button>
+        <p class="text-center">Dev a Thành 0837000077<span id="visitCount">
+                <a href="https://www.hitwebcounter.com" target="_blank">
+                    <img src="https://hitwebcounter.com/counter/counter.php?page=21040818&style=0001&nbdigits=5&type=page&initCount=0"
+                        title="Counter Widget" Alt="Visit counter For Websites" border="0" /></a></span></p>
+
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="xa-tab" data-bs-toggle="tab" data-bs-target="#xa" type="button"
+                    role="tab">Xã cũ - Xã mới</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="coquan-tab" data-bs-toggle="tab" data-bs-target="#coquan" type="button"
+                    role="tab">Sở ban ngành</button>
+            </li>
+        </ul>
+
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="xa" role="tabpanel">
+                <div class="mb-3 d-flex flex-column flex-md-row gap-2">
+                    <input type="text" id="searchInputXaOld" class="form-control"
+                        placeholder="Nhập tên cũ để tìm kiếm..." />
+                    <input type="text" id="searchInputXaNew" class="form-control"
+                        placeholder="Nhập tên mới để tìm kiếm..." />
+                </div>
+                <div id="loadingXa" class="text-primary">🔄 Đang tải dữ liệu...</div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>STT</th>
+                                <th>Tên cũ</th>
+                                <th>Tên mới</th>
+                                <th>Trụ sở</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableXa"></tbody>
+                    </table>
+                </div>
+                <nav>
+                    <ul class="pagination" id="paginationXa"></ul>
+                </nav>
+            </div>
+
+            <div class="tab-pane fade" id="coquan" role="tabpanel">
+                <div class="mb-3 d-flex flex-column flex-md-row gap-2">
+                    <input type="text" id="searchInputCoQuan" class="form-control"
+                        placeholder="Nhập từ khóa để tìm kiếm..." />
+                </div>
+                <div id="loadingCoQuan" class="text-primary">🔄 Đang tải dữ liệu...</div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>STT</th>
+                                <th>Tên</th>
+                                <th>Địa chỉ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataTableCoQuan"></tbody>
+                    </table>
+                </div>
+                <nav>
+                    <ul class="pagination" id="paginationCoQuan"></ul>
+                </nav>
+            </div>
         </div>
-
-        <div class="mb-3 d-flex flex-column flex-md-row gap-2">
-            <input type="text" id="searchInput" class="form-control" placeholder="Nhập từ khóa để tìm kiếm..." />
-            <button class="btn btn-warning" style="display: none;" id="reloadBtn">Tải lại cache</button>
-        </div>
-
-        <div id="loading" class="text-primary">🔄 Đang tải dữ liệu...</div>
-
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover">
-                <thead class="table-dark" id="tableHeader"></thead>
-                <tbody id="dataTable"></tbody>
-            </table>
-        </div>
-
-        <nav>
-            <ul class="pagination" id="pagination"></ul>
-        </nav>
     </div>
 
     <div id="toast">Đã copy!</div>
 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const versionUrl = 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLitlq25jmuiirTwJe4I628Z1mpyxOz1IKolYu4VaAT7lPJH9PIGOX6EapuVqPQDUknIyVsquhqcMNYauGnBnlGDnKgXB2GBK58VoH9972F7LJTZHBjgoPaDngoXQ7IkHqS-pERfOmnWrCsWjqzttX1blTsnKY4gSH8P6V5nxt6x95eLyNfw6a3T_jbBQXSaOxxLoKoqJf_7eE5NRuHty_WJLD-TDYNP6FTK8Mgtg2Mp2ZwntO0GYlzEJWyUiNyc90BB9fJt6IwIDCV_uSocc4v49gZF4lnDjJJYx8CK-91uI9KRT3A&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1';
-        const LOCAL_VER_KEY = 'localDataVersion';
-
-        const configs = {
-            xa: {
-                url: 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiuEji73As42_wU4cTB39juEk5f1B60ylJ3cMwZmhElx652uZLmiwLkmCLNwUziyIRhjmqTKKm1Hfl3nrF64eacgmiXjACCZARgwR5E5d6-Q9OMHvFWzvad_gYFR4vwMMDpJGNDOoUHgDjGNCbkC6Tzq2ocphhMHTNcOs1cJ5oWzMkwcCICaIVt-qprLqeL5A5WKYXCpf-Yz7pN2aFJwg4tpbM_HgZ1TRilCvHX0JFplY4PJYxVwiv4omW3ZPBQsUFe-Z3VNzVKJxi_wmpIkrBThA1urehV3Jc5XQkVCM3ve6bKGRg&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1',
-                cacheKey: 'xaDataCache',
-                header: `<tr><th>STT</th><th>Tên cũ</th><th>Tên mới</th><th>Trụ sở</th></tr>`,
-                parse: item => `<tr><td>{index}</td><td>${item.ten_cufull}<span class="copy-icon" data-copy="${item.ten_cufull}">&#128203;</span></td><td>${item.ten_moifull}<span class="copy-icon" data-copy="${item.ten_moifull}">&#128203;</span></td><td>${item.TruSo}<span class="copy-icon" data-copy="${item.TruSo}">&#128203;</span></td></tr>`
-            },
-            coquan: {
-                url: 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLg3rpnogKR6p_exEGNap2_UMVr6XbntLeqaHmQ2IkzmRQsTjhPzU3JGWw0u0EqHpMtDtmYUcGVQatmGdUEb3b981RD4jW6m-iphtnWiYjdLVXICFJC_WDvC_07VL856u7dO0oNGuflMS0RgFs0G0dupTi1xOqtehxnB2YlE1w4kJ0FvlPwRFbsqefja3HEdyzAVjwGSXEcrsQm-x84D7pfyIPTOm7z-Ng4snWrok4mtRy2-3F36idpHrHBmg3kxZUBtMHAj61XyUgp8EmBkjPZl9pFCFPY4qLj6-9lHeKKEco_7Jds&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1',
-                cacheKey: 'coquanDataCache',
-                header: `<tr><th>STT</th><th>Tên</th><th>Địa chỉ</th></tr>`,
-                parse: item => `<tr><td>{index}</td><td>${item.Ten}<span class="copy-icon" data-copy="${item.Ten}">&#128203;</span></td><td>${item.DiaChi}<span class="copy-icon" data-copy="${item.DiaChi}">&#128203;</span></td></tr>`
-            }
+        const xaConfig = {
+            verUrl: 'https://vanthanh225355.github.io/TraCuu/versiondata.json',
+            dataUrl: 'https://script.googleusercontent.com/macros/echo?user_content_key=AehSKLiuEji73As42_wU4cTB39juEk5f1B60ylJ3cMwZmhElx652uZLmiwLkmCLNwUziyIRhjmqTKKm1Hfl3nrF64eacgmiXjACCZARgwR5E5d6-Q9OMHvFWzvad_gYFR4vwMMDpJGNDOoUHgDjGNCbkC6Tzq2ocphhMHTNcOs1cJ5oWzMkwcCICaIVt-qprLqeL5A5WKYXCpf-Yz7pN2aFJwg4tpbM_HgZ1TRilCvHX0JFplY4PJYxVwiv4omW3ZPBQsUFe-Z3VNzVKJxi_wmpIkrBThA1urehV3Jc5XQkVCM3ve6bKGRg&lib=MhxqNrrZq42rJ9E2tD4EYPkLJAn7ytpq1'
         };
 
-        let currentConfig = configs.xa;
-        let data = [], filteredData = [], currentPage = 1, rowsPerPage = 50;
-
-        const searchInput = document.getElementById('searchInput');
-        const reloadBtn = document.getElementById('reloadBtn');
-        const loading = document.getElementById('loading');
-        const dataTable = document.getElementById('dataTable');
-        const pagination = document.getElementById('pagination');
-        const tableHeader = document.getElementById('tableHeader');
-        const btnXa = document.getElementById('btnXa');
-        const btnCoQuan = document.getElementById('btnCoQuan');
-        const toast = document.getElementById('toast');
-
-        function showToast(message) {
-            toast.textContent = message;
-            toast.style.display = 'block';
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 2000);
-        }
+        const cqConfig = {
+            verUrl: 'https://vanthanh225355.github.io/TraCuu/versiondata.json',
+            dataUrl: 'https://script.google.com/macros/s/AKfycbyy52_SAqRV-dvNsmyI2WcfZrQnYqg9n2iQM3UhAPdDhMrxtnQIonT4ak6aFnf8V8OWXQ/exec?sheet=CoQuan'
+        };
 
         function removeVietnameseTones(str) {
-            return str.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D");
+            return str.normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
         }
 
-        async function checkVersionAndLoad() {
-            try {
-                const res = await fetch(versionUrl);
-                const json = await res.json();
-                const serverVer = json[0]?.ver;
-                const localVer = localStorage.getItem(LOCAL_VER_KEY);
-                if (localVer != serverVer) {
-                    localStorage.setItem(LOCAL_VER_KEY, serverVer);
-                    localStorage.removeItem(currentConfig.cacheKey);
-                }
-                loadData();
-            } catch (e) {
-                console.error('Lỗi kiểm tra version:', e);
-                loadData();
-            }
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.style.display = 'block';
+            setTimeout(() => { toast.style.display = 'none'; }, 2000);
         }
 
-        function renderTable(page = 1) {
-            dataTable.innerHTML = '';
-            let start = (page - 1) * rowsPerPage;
-            let paginatedData = filteredData.slice(start, start + rowsPerPage);
-            paginatedData.forEach((item, index) => {
-                let row = currentConfig.parse(item).replace('{index}', start + index + 1);
-                dataTable.innerHTML += row;
-            });
-            attachCopyEvents();
-        }
-
-        function renderPagination() {
-            pagination.innerHTML = '';
-            let totalPages = Math.ceil(filteredData.length / rowsPerPage);
-            for (let i = 1; i <= totalPages; i++) {
-                let li = document.createElement('li');
-                li.className = 'page-item' + (i === currentPage ? ' active' : '');
-                li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-                li.addEventListener('click', function (e) {
-                    e.preventDefault();
-                    currentPage = i;
-                    renderTable(currentPage);
-                    renderPagination();
-                });
-                pagination.appendChild(li);
-            }
-        }
-
-        function handleSearch() {
-                let keyword = removeVietnameseTones(searchInput.value.toLowerCase().trim());
-                let keywords = keyword.split(' ').filter(k => k !== '');
-
-                if (keywords.length === 0) {
-                    filteredData = [...data];
-                } else {
-                    let scoredData = data.map(item => {
-                          let searchString = removeVietnameseTones(`${item.ten_cufull || ''} ${item.ten_moifull || ''}`.toLowerCase()).trim();
-                        let words = searchString.split(/\s+/);
-
-                        // Tìm vị trí các từ khóa
-                        let positions = keywords.map(kw => {
-                            let indices = [];
-                            words.forEach((word, index) => {
-                                if (word.includes(kw)) indices.push(index);
-                            });
-                            return indices;
-                        });
-
-                        // Nếu từ khóa nào không tìm thấy thì loại kết quả này
-                        if (positions.some(pos => pos.length === 0)) {
-                            return { ...item, score: 0 };
-                        }
-
-                        let minDistance = Infinity;
-
-                        positions[0].forEach(pos1 => {
-                            let minPos = pos1;
-                            let maxPos = pos1;
-
-                            for (let i = 1; i < positions.length; i++) {
-                                let closest = positions[i].reduce((prev, curr) =>
-                                    Math.abs(curr - pos1) < Math.abs(prev - pos1) ? curr : prev
-                                );
-                                minPos = Math.min(minPos, closest);
-                                maxPos = Math.max(maxPos, closest);
-                            }
-
-                            let distance = maxPos - minPos;
-                            if (distance < minDistance) minDistance = distance;
-                        });
-
-                        let score = 1000 - minDistance;
-
-                        // Ưu tiên cực mạnh nếu chứa cụm từ nguyên vẹn
-                        if (searchString.includes(keyword)) score += 10000;
-
-                        return { ...item, score };
-                    });
-
-                    filteredData = scoredData.filter(item => item.score > 0);
-                    filteredData.sort((a, b) => b.score - a.score);
-                    filteredData = filteredData.map(({ score, ...rest }) => rest);
-                }
-
-                currentPage = 1;
-                renderTable(currentPage);
-                renderPagination();
-            }
-
-
-
-        async function fetchDataDanhBa() {
-            loading.textContent = '🔄 Đang tải dữ liệu...';
-            loading.style.display = 'block';
-            const res = await fetch(currentConfig.url);
-            const json = await res.json();
-            loading.style.display = 'none';
-            return json.data || json;
-        }
-
-        async function loadData() {
-            loading.style.display = 'block';
-            let cacheData = localStorage.getItem(currentConfig.cacheKey);
-            if (cacheData) {
-                let decompressed = LZString.decompress(cacheData);
-                data = JSON.parse(decompressed);
-                //filteredData = [...data];
-                filteredData = [...data.slice(0, 500)]; 
-                loading.textContent = '✅ Dữ liệu được tải từ cache';
-                setTimeout(() => loading.style.display = 'none', 100);
-                renderTable(currentPage);
-                renderPagination();
-                return;
-            }
-            try {
-                const freshData = await fetchDataDanhBa();
-                data = freshData;
-                //filteredData = [...data];
-                filteredData = [...data.slice(0, 500)]; 
-                let compressed = LZString.compress(JSON.stringify(data));
-                localStorage.setItem(currentConfig.cacheKey, compressed);
-                renderTable(currentPage);
-                renderPagination();
-                loading.textContent = '✅ Dữ liệu mới đã lưu';
-                setTimeout(() => loading.style.display = 'none', 100);
-            } catch (error) {
-                console.error('❌ Lỗi khi tải dữ liệu:', error);
-                loading.textContent = '❌ Lỗi khi tải dữ liệu';
-            }
-        }
-
-        function switchMode(mode) {
-            if (mode === 'xa') {
-                currentConfig = configs.xa;
-                btnXa.classList.add('btn-primary');
-                btnXa.classList.remove('btn-secondary');
-                btnCoQuan.classList.add('btn-secondary');
-                btnCoQuan.classList.remove('btn-primary');
-            } else {
-                currentConfig = configs.coquan;
-                btnCoQuan.classList.add('btn-primary');
-                btnCoQuan.classList.remove('btn-secondary');
-                btnXa.classList.add('btn-secondary');
-                btnXa.classList.remove('btn-primary');
-            }
-            tableHeader.innerHTML = currentConfig.header;
-            currentPage = 1;
-            rowsPerPage = 50;
-            checkVersionAndLoad();
+        async function fetchJson(url) {
+            const res = await fetch(url);
+            return await res.json();
         }
 
         function attachCopyEvents() {
             document.querySelectorAll('.copy-icon').forEach(icon => {
                 icon.addEventListener('click', () => {
                     const textToCopy = icon.getAttribute('data-copy');
-                    navigator.clipboard.writeText(textToCopy).then(() => {
-                        showToast('Đã copy: ' + textToCopy);
-                    });
+                    navigator.clipboard.writeText(textToCopy).then(() => showToast('Đã copy: ' + textToCopy));
                 });
             });
         }
 
-        searchInput.addEventListener('input', handleSearch);
+        async function syncData(config, storageKey, verKey) {
+            try {
+                const serverVer = await fetchJson(config.verUrl);
+                const localVer = localStorage.getItem(verKey);
+                if (Number(localVer) !== serverVer[0].ver) {
+                    const newData = await fetchJson(config.dataUrl);
+                    localStorage.setItem(storageKey, JSON.stringify(newData));
+                    localStorage.setItem(verKey, serverVer[0].ver);
+                }
+            } catch (error) {
+                console.error('Lỗi đồng bộ dữ liệu:', error);
+            }
+        }
 
-        reloadBtn.addEventListener('click', () => {
-            localStorage.removeItem(currentConfig.cacheKey);
-            loadData();
+        async function loadAllData() {
+            await Promise.all([
+                syncData(xaConfig, 'danhmucxa', 'ver_xa'),
+                syncData(cqConfig, 'danhmucbannganh', 'ver_cq')
+            ]);
+
+            loadXaData();
+            loadCoQuanData();
+        }
+
+        let xaData = [], xaFiltered = [], xaPage = 1, xaRowsPerPage = 50;
+
+        function loadXaData() {
+            document.getElementById('loadingXa').style.display = 'block';
+            try {
+                const data = JSON.parse(localStorage.getItem('danhmucxa')) || [];
+                xaData = data.map(item => ({
+                    ...item,
+                    oldKey: removeVietnameseTones(item.ten_cufull || '').toLowerCase(),
+                    newKey: removeVietnameseTones(item.ten_moifull || '').toLowerCase(),
+                    truSoKey: removeVietnameseTones(item.TruSo || '').toLowerCase()
+                }));
+                   // Chỉ hiển thị 50 dòng đầu tiên
+                xaFiltered = xaData.slice(0, 50);
+                renderXaTable();
+                renderXaPagination();
+            } catch (e) {
+                console.error('Lỗi tải danh mục xã:', e);
+            }
+            document.getElementById('loadingXa').style.display = 'none';
+        }
+
+        function renderXaTable() {
+            const tbody = document.getElementById('dataTableXa');
+            tbody.innerHTML = '';
+            const start = (xaPage - 1) * xaRowsPerPage;
+            xaFiltered.slice(start, start + xaRowsPerPage).forEach((item, index) => {
+                tbody.innerHTML += `<tr>
+                    <td>${start + index + 1}</td>
+                    <td>${item.ten_cufull}<span class="copy-icon" data-copy="${item.ten_cufull}">&#128203;</span></td>
+                    <td>${item.ten_moifull}<span class="copy-icon" data-copy="${item.ten_moifull}">&#128203;</span></td>
+                    <td>${item.TruSo}<span class="copy-icon" data-copy="${item.TruSo}">&#128203;</span></td>
+                </tr>`;
+            });
+            attachCopyEvents();
+        }
+
+        function renderXaPagination() {
+            const totalPages = Math.ceil(xaFiltered.length / xaRowsPerPage);
+            const pag = document.getElementById('paginationXa');
+            pag.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.className = 'page-item' + (i === xaPage ? ' active' : '');
+                li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                li.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    xaPage = i;
+                    renderXaTable();
+                    renderXaPagination();
+                });
+                pag.appendChild(li);
+            }
+        }
+
+        document.getElementById('searchInputXaOld').addEventListener('input', searchXa);
+        document.getElementById('searchInputXaNew').addEventListener('input', searchXa);
+
+        function searchXa() {
+                const oldKeyword = removeVietnameseTones(document.getElementById('searchInputXaOld').value.toLowerCase().trim());
+                const newKeyword = removeVietnameseTones(document.getElementById('searchInputXaNew').value.toLowerCase().trim());
+
+                const oldWords = oldKeyword.split(' ').filter(w => w !== '');
+                const newWords = newKeyword.split(' ').filter(w => w !== '');
+
+                if (oldWords.length === 0 && newWords.length === 0) {
+                    xaFiltered = xaData.slice(0, 50);
+                    xaPage = 1;
+                    renderXaTable();
+                    renderXaPagination();
+                    return;
+                }
+
+                xaFiltered = xaData.map(item => {
+                    let oldPriority = calculateMatchPriority(item.oldKey, oldKeyword, oldWords);
+                    let newPriority = calculateMatchPriority(item.newKey, newKeyword, newWords);
+
+                    let totalPriority = oldPriority + newPriority;
+
+                    return { ...item, matchScore: totalPriority };
+                }).filter(item => item.matchScore > 0);
+
+                xaFiltered.sort((a, b) => b.matchScore - a.matchScore);
+
+                xaPage = 1;
+                renderXaTable();
+                renderXaPagination();
+            }
+
+            function calculateMatchPriority(target, fullKeyword, keywordWords) {
+                    if (!fullKeyword) return 0;
+
+                    let priority = 0;
+
+                    // 1. Ưu tiên tuyệt đối: Trùng nguyên cụm liên tiếp
+                    if (target.includes(fullKeyword)) {
+                        priority += 10000;
+                        return priority;
+                    }
+
+                    // 2. Trùng thứ tự, tính khoảng cách giữa từ khớp đầu và cuối
+                    let index = 0;
+                    let positions = [];
+                    let allWordsMatchInOrder = keywordWords.every(word => {
+                        let foundIndex = target.indexOf(word, index);
+                        if (foundIndex >= 0) {
+                            positions.push(foundIndex);
+                            index = foundIndex + word.length;
+                            return true;
+                        }
+                        return false;
+                    });
+
+                    if (allWordsMatchInOrder && positions.length > 1) {
+                        let distance = positions[positions.length - 1] - positions[0];
+                        priority += 5000 - distance;
+                        return priority;
+                    }
+
+                    // 3. Trùng đủ các từ, không cần đúng thứ tự
+                    let allWordsFound = keywordWords.every(word => target.includes(word));
+                    if (allWordsFound) {
+                        priority += 3000;
+                        return priority;
+                    }
+
+                    // 4. Trùng ký tự rời rạc
+                    let charMatches = fullKeyword.split('').filter(char => target.includes(char)).length;
+                    priority += charMatches;
+
+                    return priority;
+                }
+
+
+
+
+        let cqData = [], cqFiltered = [], cqPage = 1, cqRowsPerPage = 50;
+
+        function loadCoQuanData() {
+            document.getElementById('loadingCoQuan').style.display = 'block';
+            try {
+                const data = JSON.parse(localStorage.getItem('danhmucbannganh')) || [];
+                cqData = data.map(item => ({
+                    ...item,
+                    searchKey: removeVietnameseTones(`${item.Ten} ${item.DiaChi}`.toLowerCase())
+                }));
+              
+
+                cqFiltered = cqData.slice(0, 50);
+                renderCoQuanTable();
+                renderCoQuanPagination();
+            } catch (e) {
+                console.error('Lỗi tải danh mục cơ quan:', e);
+            }
+            document.getElementById('loadingCoQuan').style.display = 'none';
+        }
+
+        function renderCoQuanTable() {
+            const tbody = document.getElementById('dataTableCoQuan');
+            tbody.innerHTML = '';
+            const start = (cqPage - 1) * cqRowsPerPage;
+            cqFiltered.slice(start, start + cqRowsPerPage).forEach((item, index) => {
+                tbody.innerHTML += `<tr>
+                    <td>${start + index + 1}</td>
+                    <td>${item.Ten}<span class="copy-icon" data-copy="${item.Ten}">&#128203;</span></td>
+                    <td>${item.DiaChi}<span class="copy-icon" data-copy="${item.DiaChi}">&#128203;</span></td>
+                </tr>`;
+            });
+            attachCopyEvents();
+        }
+
+        function renderCoQuanPagination() {
+            const totalPages = Math.ceil(cqFiltered.length / cqRowsPerPage);
+            const pag = document.getElementById('paginationCoQuan');
+            pag.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const li = document.createElement('li');
+                li.className = 'page-item' + (i === cqPage ? ' active' : '');
+                li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                li.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    cqPage = i;
+                    renderCoQuanTable();
+                    renderCoQuanPagination();
+                });
+                pag.appendChild(li);
+            }
+        }
+
+        document.getElementById('searchInputCoQuan').addEventListener('input', () => {
+            const keyword = removeVietnameseTones(document.getElementById('searchInputCoQuan').value.toLowerCase().trim());
+            const keywords = keyword.split(' ').filter(w => w !== '');
+
+            cqFiltered = cqData.map(item => {
+                let matches = keywords.filter(w => item.searchKey.includes(w)).length;
+                return { ...item, matchScore: matches };
+            }).filter(item => item.matchScore > 0);
+
+            cqFiltered.sort((a, b) => b.matchScore - a.matchScore);
+
+            cqPage = 1;
+            renderCoQuanTable();
+            renderCoQuanPagination();
         });
 
-        btnXa.addEventListener('click', () => switchMode('xa'));
-        btnCoQuan.addEventListener('click', () => switchMode('coquan'));
-
-        switchMode('xa');
+        loadAllData();
     </script>
 </body>
 
